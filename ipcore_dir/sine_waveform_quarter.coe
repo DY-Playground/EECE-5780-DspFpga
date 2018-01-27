@@ -1,0 +1,45 @@
+; memory initialization file for ROM Block Memory, 
+;
+; This .COE file specifies initialization values for a block memory of 
+; depth=250, and width=16. Values are specified in hex format a word
+; at a time.
+; This is the first quarter of the sine waveform created from the sine.py 
+; script by J. Moran.
+;
+memory_initialization_radix=16;
+memory_initialization_vector=
+0000, 00CE, 019C, 026A, 0337, 0405, 04D3, 05A1,
+066E, 073C, 0809, 08D7, 09A4, 0A71, 0B3F, 0C0C,
+0CD9, 0DA5, 0E72, 0F3E, 100B, 10D7, 11A3, 126F,
+133A, 1406, 14D1, 159C, 1667, 1732, 17FC, 18C6,
+1990, 1A5A, 1B23, 1BEC, 1CB5, 1D7D, 1E45, 1F0D,
+1FD5, 209C, 2163, 222A, 22F0, 23B6, 247B, 2540,
+2605, 26CA, 278E, 2851, 2914, 29D7, 2A99, 2B5B,
+2C1D, 2CDE, 2D9F, 2E5F, 2F1E, 2FDE, 309C, 315A,
+3218, 32D5, 3392, 344E, 350A, 35C5, 3680, 373A,
+37F3, 38AC, 3964, 3A1C, 3AD3, 3B8A, 3C40, 3CF5,
+3DAA, 3E5E, 3F11, 3FC4, 4076, 4128, 41D9, 4289,
+4338, 43E7, 4495, 4543, 45F0, 469C, 4747, 47F2,
+489C, 4945, 49ED, 4A95, 4B3C, 4BE2, 4C88, 4D2C,
+4DD0, 4E73, 4F15, 4FB7, 5058, 50F7, 5196, 5235,
+52D2, 536F, 540A, 54A5, 553F, 55D8, 5671, 5708,
+579F, 5834, 58C9, 595D, 59F0, 5A82, 5B13, 5BA3,
+5C32, 5CC1, 5D4E, 5DDB, 5E66, 5EF1, 5F7A, 6003,
+608B, 6111, 6197, 621C, 629F, 6322, 63A4, 6425,
+64A4, 6523, 65A1, 661D, 6699, 6714, 678D, 6806,
+687D, 68F3, 6969, 69DD, 6A50, 6AC2, 6B33, 6BA3,
+6C12, 6C80, 6CED, 6D58, 6DC3, 6E2C, 6E94, 6EFB,
+6F61, 6FC6, 702A, 708D, 70EE, 714E, 71AE, 720C,
+7269, 72C4, 731F, 7378, 73D0, 7428, 747D, 74D2,
+7526, 7578, 75C9, 7619, 7668, 76B6, 7702, 774D,
+7797, 77E0, 7827, 786E, 78B3, 78F7, 793A, 797B,
+79BB, 79FA, 7A38, 7A75, 7AB0, 7AEA, 7B23, 7B5A,
+7B91, 7BC6, 7BFA, 7C2C, 7C5D, 7C8E, 7CBC, 7CEA,
+7D16, 7D41, 7D6B, 7D93, 7DBB, 7DE1, 7E05, 7E29,
+7E4B, 7E6C, 7E8B, 7EA9, 7EC6, 7EE2, 7EFD, 7F16,
+7F2E, 7F44, 7F5A, 7F6E, 7F80, 7F92, 7FA2, 7FB1,
+7FBE, 7FCB, 7FD6, 7FDF, 7FE8, 7FEF, 7FF5, 7FF9,
+7FFC, 7FFE;
+
+                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
