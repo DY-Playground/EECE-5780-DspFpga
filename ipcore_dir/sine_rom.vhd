@@ -63,7 +63,7 @@ END COMPONENT;
     GENERIC MAP (
       c_addra_width => 10,
       c_addrb_width => 10,
-      c_algorithm => 0,
+      c_algorithm => 1,
       c_axi_id_width => 4,
       c_axi_slave_type => 0,
       c_axi_type => 1,
@@ -96,7 +96,7 @@ END COMPONENT;
       c_load_init_file => 1,
       c_mem_type => 3,
       c_mux_pipeline_stages => 0,
-      c_prim_type => 4,
+      c_prim_type => 1,
       c_read_depth_a => 1024,
       c_read_depth_b => 1024,
       c_read_width_a => 16,
