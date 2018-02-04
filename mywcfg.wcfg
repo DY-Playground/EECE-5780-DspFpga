@@ -9,13 +9,15 @@
             <top_module name="numeric_std" />
             <top_module name="std_logic_1164" />
             <top_module name="std_logic_arith" />
+            <top_module name="std_logic_signed" />
             <top_module name="std_logic_textio" />
             <top_module name="std_logic_unsigned" />
             <top_module name="textio" />
+            <top_module name="vcomponents" />
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="10" />
+   <WVObjectSize size="12" />
    <wvobject fp_name="/func_gen_tb/func_gen_clk_in" type="logic" db_ref_id="1">
       <obj_property name="ElementShortName">func_gen_clk_in</obj_property>
       <obj_property name="ObjectShortName">func_gen_clk_in</obj_property>
@@ -33,11 +35,6 @@
       <obj_property name="ElementShortName">func_gen_int_sine_data[15:0]</obj_property>
       <obj_property name="ObjectShortName">func_gen_int_sine_data[15:0]</obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/func_gen_tb/uut/func_gen_int_sine_addr" type="array" db_ref_id="1">
-      <obj_property name="ElementShortName">func_gen_int_sine_addr[9:0]</obj_property>
-      <obj_property name="ObjectShortName">func_gen_int_sine_addr[9:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/func_gen_tb/func_gen_pulse_out" type="array" db_ref_id="1">
       <obj_property name="ElementShortName">func_gen_pulse_out[15:0]</obj_property>
@@ -62,5 +59,21 @@
    <wvobject fp_name="/func_gen_tb/uut/func_gen_int_sine_amp" type="array" db_ref_id="1">
       <obj_property name="ElementShortName">func_gen_int_sine_amp[15:0]</obj_property>
       <obj_property name="ObjectShortName">func_gen_int_sine_amp[15:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/func_gen_tb/uut/func_gen_int_uns_scnt" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">func_gen_int_uns_scnt[9:0]</obj_property>
+      <obj_property name="ObjectShortName">func_gen_int_uns_scnt[9:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/func_gen_tb/uut/func_gen_int_uns_pcnt" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">func_gen_int_uns_pcnt[9:0]</obj_property>
+      <obj_property name="ObjectShortName">func_gen_int_uns_pcnt[9:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/func_gen_tb/uut/func_gen_int_uns_dcstep" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">func_gen_int_uns_dcstep[9:0]</obj_property>
+      <obj_property name="ObjectShortName">func_gen_int_uns_dcstep[9:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
 </wave_config>
