@@ -21,7 +21,7 @@
 #include <malloc.h>
 #define alloca _alloca
 #endif
-static const char *ng0 = "D:/Xilinx/func_gen/func_gen_tb.vhd";
+static const char *ng0 = "C:/Xilinx/func_gen/func_gen_tb.vhd";
 
 
 

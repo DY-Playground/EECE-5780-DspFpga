@@ -54,17 +54,17 @@ ENTITY func_gen IS
     	:= "0000111";  -- 0-100
     -- Triangle Wave Parameters
     FUNC_GEN_TRIANGLE_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "111111111111111";  -- x3FFF=0dB attenuation
+    	:= "000000000000111";  -- x3FFF=0dB attenuation
     FUNC_GEN_TRIANGLE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
     -- Sawtooth Wave Parameters
     FUNC_GEN_SAWTOOTH_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "111111111111111";  -- x3FFF=0dB attenuation
+    	:= "000000000001111";  -- x3FFF=0dB attenuation
     FUNC_GEN_SAWTOOTH_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
     -- DC Offset Parameters
     FUNC_GEN_DCOFSET_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-     	:= "111111111111111"  -- x3FFF=0dB attenuation
+     	:= "001111111111111"  -- x3FFF=0dB attenuation
   );
     
 -------------------------------------------------------------------------------
@@ -98,8 +98,18 @@ SIGNAL func_gen_int_uns_dctemp : UNSIGNED(11 DOWNTO 0) := (OTHERS => '1');
 SIGNAL func_gen_int_uns_dcstep : UNSIGNED(9 DOWNTO 0) := (OTHERS => '1');
 SIGNAL func_gen_int_pulse_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
 SIGNAL func_gen_int_uns_tcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_uns_tcnt1 : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
 SIGNAL func_gen_int_triangle_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
 SIGNAL func_gen_int_triangle_negmax : STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL func_gen_int_tpos_slope : STD_LOGIC_VECTOR(24 DOWNTO 0);
+SIGNAL func_gen_int_tneg_slope : STD_LOGIC_VECTOR(24 DOWNTO 0);
+SIGNAL func_gen_int_triangle_temp1 : STD_LOGIC_VECTOR(35 DOWNTO 0);
+SIGNAL func_gen_int_triangle_temp2 : STD_LOGIC_VECTOR(35 DOWNTO 0);
+SIGNAL func_gen_int_uns_sawcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_sawtooth_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL func_gen_int_sawpos_slope : STD_LOGIC_VECTOR(24 DOWNTO 0);
+SIGNAL func_gen_int_sawtooth_temp1 : STD_LOGIC_VECTOR(35 DOWNTO 0);
+SIGNAL func_gen_int_dcoffset_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
 
 -------------------------------------------------------------------------------
 -- COMPONENTS
@@ -186,38 +196,76 @@ BEGIN
   func_gen_pulse_out <= func_gen_int_pulse_data; --non-synchronous assigment
   --
   --triangle counter
-  --triangle_data starts at -FUNC_GEN_TRIANGLE_AMPLITUDE, then counts up to +FUNC_GEN_TRIANGLE_AMPLITUDE
-  --in half a period, then it counts with an equal but opposite slope for the 2nd half of the period
+  --Triangle_data starts at -FUNC_GEN_TRIANGLE_AMPLITUDE, then counts up to +FUNC_GEN_TRIANGLE_AMPLITUDE
+  --in half a period, then it counts with an equal but opposite slope for the 2nd half of the period.
+  --The slope is 2*FUNC_GEN_TRIANGLE_AMPLITUDE / 500 tcnts = FUNC_GEN_TRIANGLE_AMPLITUDE / 250.
+  --Dividing by 250 is approximately equal to multiplying by 131 and then dividing by 32768 (rt shift by 15).
   --tcnt counts in steps of PULSE_FREQUENCY up to 999
   triangle_counter: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
   BEGIN
     IF (func_gen_rst_l_in='0') THEN 
      	func_gen_int_uns_tcnt <= (OTHERS => '0');
-     	func_gen_int_triangle_negmax <= -('0' & FUNC_GEN_TRIANGLE_AMPLITUDE); --neg max amplitude
-     	func_gen_int_triangle_data <= "1000000000000000";
-     	func_gen_int_tpos_slope <= "0000000000000001";
-     	func_gen_int_tneg_slope <= "1111111111111111";
+     	func_gen_int_uns_tcnt1 <= (OTHERS => '0');
+     	func_gen_int_triangle_data <= (OTHERS => '0');
+     	func_gen_int_tpos_slope <= (OTHERS => '0');
+     	func_gen_int_tneg_slope <= (OTHERS => '0');
+     	func_gen_int_triangle_negmax <= (OTHERS => '0');
+     	func_gen_int_triangle_temp1 <= (OTHERS => '0');
+     	func_gen_int_triangle_temp2 <= (OTHERS => '0');
     ELSIF (func_gen_clk_in'EVENT AND func_gen_clk_in='1') THEN
+     	func_gen_int_triangle_negmax <= -('0' & FUNC_GEN_TRIANGLE_AMPLITUDE); --neg max amplitude
+      func_gen_int_tpos_slope <= ('0' & FUNC_GEN_TRIANGLE_AMPLITUDE) * "010000011"; --mult by 131
+      func_gen_int_tneg_slope <= -func_gen_int_tpos_slope;
       IF (func_gen_int_uns_tcnt >= FUNC_GEN_MAX_UNS_CNT) THEN
-        func_gen_int_uns_tcnt <= (OTHERS => '0');
-        func_gen_int_triangle_data <= func_gen_int_triangle_negmax; 
-      ELSIF (func_gen_int_uns_tcnt > "0111110011") THEN --greater than 499 is 2nd half of period
+        func_gen_int_uns_tcnt <= (OTHERS => '0'); --at end of period, reset tcnt
+        func_gen_int_uns_tcnt1 <= (OTHERS => '0'); --reset tcnt2
+        func_gen_int_triangle_data <= func_gen_int_triangle_negmax; --reset triangle_data
+      ELSIF (func_gen_int_uns_tcnt >= "0111110011") THEN --greater than 499 is negative slope region
       	func_gen_int_uns_tcnt <= func_gen_int_uns_tcnt + UNSIGNED(FUNC_GEN_TRIANGLE_FREQUENCY);
-      	func_gen_int_triangle_data <= FUNC_GEN_TRIANGLE_AMPLITUDE + 
-      	  func_gen_int_uns_tcnt(9 DOWNTO 1) * func_gen_int_triangle_negmax/"0111110100";
+      	func_gen_int_uns_tcnt1 <= func_gen_int_uns_tcnt1 + UNSIGNED(FUNC_GEN_TRIANGLE_FREQUENCY); --tcnt - 500
+      	func_gen_int_triangle_temp2 <= STD_LOGIC_VECTOR('0' & func_gen_int_uns_tcnt1) * func_gen_int_tneg_slope;
+      	func_gen_int_triangle_data <= ('0' & FUNC_GEN_TRIANGLE_AMPLITUDE) + func_gen_int_triangle_temp2(30 DOWNTO 15);
+      	--shift rt by 15 for div by 250
       ELSE
       	func_gen_int_uns_tcnt <= func_gen_int_uns_tcnt + UNSIGNED(FUNC_GEN_TRIANGLE_FREQUENCY);
-      	func_gen_int_triangle_data <= func_gen_int_triangle_negmax + 
-      	  func_gen_int_uns_tcnt * FUNC_GEN_TRIANGLE_AMPLITUDE/"0111110100";
+      	func_gen_int_triangle_temp1 <= STD_LOGIC_VECTOR('0' & func_gen_int_uns_tcnt) * func_gen_int_tpos_slope;
+      	func_gen_int_triangle_data <= func_gen_int_triangle_negmax + func_gen_int_triangle_temp1(30 DOWNTO 15);
+       --shift rt by 15 for div by 250
       END IF;
-      func_gen_int_tpos_slope <= FUNC_GEN_TRIANGLE_AMPLITUDE/"0111110100";
-      func_gen_int_tneg_slope <= -FUNC_GEN_TRIANGLE_AMPLITUDE/"0111110100";
     END IF;  	
   END PROCESS triangle_counter;
   func_gen_triangle_out <= func_gen_int_triangle_data; --non-synchronous assigment
-
-
- 
+  --
+  --sawtooth counter
+  --Sawtooth_data starts at zero, then counts up to +FUNC_GEN_SAWTOOTH_AMPLITUDE
+  --in a full period, then it resets to zero in a single sawcnt.
+  --The slope is FUNC_GEN_TRIANGLE_AMPLITUDE / 1000 tcnts.
+  --Dividing by 1000 is approximately equal to multiplying by 131 and then dividing by 131072 (rt shift by 17).
+  --sawcnt counts in steps of SAWTOOTH_FREQUENCY up to 999
+  sawtooth_counter: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
+  BEGIN
+    IF (func_gen_rst_l_in='0') THEN 
+     	func_gen_int_uns_sawcnt <= (OTHERS => '0');
+     	func_gen_int_sawtooth_data <= (OTHERS => '0');
+     	func_gen_int_sawpos_slope <= (OTHERS => '0');
+     	func_gen_int_sawtooth_temp1 <= (OTHERS => '0');
+     	func_gen_int_dcoffset_data <= (OTHERS => '0');
+    ELSIF (func_gen_clk_in'EVENT AND func_gen_clk_in='1') THEN
+      func_gen_int_sawpos_slope <= ('0' & FUNC_GEN_SAWTOOTH_AMPLITUDE) * "010000011"; --mult by 131
+      func_gen_int_dcoffset_data <= ('0' & FUNC_GEN_DCOFSET_AMPLITUDE);
+      IF (func_gen_int_uns_sawcnt >= FUNC_GEN_MAX_UNS_CNT) THEN
+        func_gen_int_uns_sawcnt <= (OTHERS => '0'); --at end of period, reset sawcnt
+        func_gen_int_sawtooth_data <= (OTHERS => '0'); --reset sawtooth_data
+      ELSE
+      	func_gen_int_uns_sawcnt <= func_gen_int_uns_sawcnt + UNSIGNED(FUNC_GEN_SAWTOOTH_FREQUENCY);
+      	func_gen_int_sawtooth_temp1 <= STD_LOGIC_VECTOR('0' & func_gen_int_uns_sawcnt) * func_gen_int_sawpos_slope;
+      	func_gen_int_sawtooth_data <= func_gen_int_sawtooth_temp1(32 DOWNTO 17);
+       --shift rt by 17 for div by 1000
+      END IF;
+    END IF;  	
+  END PROCESS sawtooth_counter;
+  func_gen_sawtooth_out <= func_gen_int_sawtooth_data; --non-synchronous assigment
+  func_gen_dcoffset_out <= func_gen_int_dcoffset_data; --non-synchronous assignment
 END Rtl; 
 
 -------------------------------------------------------------------------------
