@@ -15,7 +15,8 @@
 -- have 16 bit resolution and use two’s complement representations. The input 
 -- clock is a rising edge 100 MHz and there is an active low reset. All of the 
 -- parameters are passed as generics. The final design should be synthesizeable 
--- to the BASYS2 and simulated in Modelsim.
+-- to the NEXYS3 and simulated in Isim. Sine and Triangle are bipolar. Pulse,
+-- Sawtooth, and Dcoffset are unipolar.  All are 16-bit 2's complement.
 --
 -- Dependencies:  
 --
@@ -40,7 +41,7 @@ ENTITY func_gen IS
     	:= "1111100111"; -- 999
     -- Sine Wave Parameters
     FUNC_GEN_SINE_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "000000000001111";  -- x3FFF=0dB attenuation
+    	:= "000000000011111";  -- x3FFF=0dB attenuation
     FUNC_GEN_SINE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
     FUNC_GEN_SINE_PHASE : STD_LOGIC_VECTOR(2 DOWNTO 0)
@@ -51,20 +52,20 @@ ENTITY func_gen IS
     FUNC_GEN_PULSE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
     FUNC_GEN_PULSE_DUTYCYCLE : STD_LOGIC_VECTOR(6 DOWNTO 0)
-    	:= "0000111";  -- 0-100
+    	:= "0110010";  -- 0-100
     -- Triangle Wave Parameters
     FUNC_GEN_TRIANGLE_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
     	:= "000000000000111";  -- x3FFF=0dB attenuation
     FUNC_GEN_TRIANGLE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
-    	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
+    	:= "0000000011";  -- x001=100 KHz, 100 KHz steps
     -- Sawtooth Wave Parameters
     FUNC_GEN_SAWTOOTH_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "000000000001111";  -- x3FFF=0dB attenuation
+    	:= "000000000011111";  -- x3FFF=0dB attenuation
     FUNC_GEN_SAWTOOTH_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
-    	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
+    	:= "0000000010";  -- x001=100 KHz, 100 KHz steps
     -- DC Offset Parameters
     FUNC_GEN_DCOFSET_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-     	:= "111111111111111"  -- x3FFF=0dB attenuation
+     	:= "001111111111111"  -- x3FFF=0dB attenuation
   );
     
 -------------------------------------------------------------------------------
@@ -95,7 +96,6 @@ SIGNAL func_gen_int_sine_data : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0')
 SIGNAL func_gen_int_sine_amp : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
 SIGNAL func_gen_int_uns_pcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
 SIGNAL func_gen_int_uns_dctemp : UNSIGNED(11 DOWNTO 0) := (OTHERS => '1');
-SIGNAL func_gen_int_uns_dcstep : UNSIGNED(9 DOWNTO 0) := (OTHERS => '1');
 SIGNAL func_gen_int_pulse_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
 SIGNAL func_gen_int_uns_tcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
 SIGNAL func_gen_int_uns_tcnt1 : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
@@ -178,21 +178,22 @@ BEGIN
     IF (func_gen_rst_l_in='0') THEN 
      	func_gen_int_uns_pcnt <= (OTHERS => '0'); 
      	func_gen_int_uns_dctemp <= (OTHERS => '1'); 
-     	func_gen_int_pulse_data <= ('0' & FUNC_GEN_PULSE_AMPLITUDE); 
+     	func_gen_int_pulse_data <= (OTHERS => '0'); 
     ELSIF (func_gen_clk_in'EVENT AND func_gen_clk_in='1') THEN
       IF (func_gen_int_uns_pcnt >= FUNC_GEN_MAX_UNS_CNT) THEN
         func_gen_int_uns_pcnt <= (OTHERS => '0');
-        func_gen_int_pulse_data <= ('0' & FUNC_GEN_PULSE_AMPLITUDE); --positive 2's comp at start
+        func_gen_int_pulse_data <= (OTHERS => '0'); --zero at start
       ELSE 
         func_gen_int_uns_pcnt <= func_gen_int_uns_pcnt + unsigned(FUNC_GEN_PULSE_FREQUENCY);
         func_gen_int_uns_dctemp <= UNSIGNED(FUNC_GEN_PULSE_DUTYCYCLE) * "10100"; --mult by 20
-        IF (func_gen_int_uns_pcnt >= func_gen_int_uns_dcstep) THEN --10 pcnt's per dcstep
+        IF (func_gen_int_uns_pcnt >= func_gen_int_uns_dctemp(10 DOWNTO 1)) THEN --10 pcnt's per dcstep
           func_gen_int_pulse_data <= (OTHERS => '0');
+        ELSE
+          func_gen_int_pulse_data <= ('0' & FUNC_GEN_PULSE_AMPLITUDE);
         END IF;
       END IF;
     END IF;  	
   END PROCESS pulse_counter;
-  func_gen_int_uns_dcstep <= func_gen_int_uns_dctemp(10 DOWNTO 1); --divide by 2, 10 pcnt's per dcstep
   func_gen_pulse_out <= func_gen_int_pulse_data; --non-synchronous assigment
   --
   --triangle counter
@@ -220,6 +221,8 @@ BEGIN
         func_gen_int_uns_tcnt <= (OTHERS => '0'); --at end of period, reset tcnt
         func_gen_int_uns_tcnt1 <= (OTHERS => '0'); --reset tcnt2
         func_gen_int_triangle_data <= func_gen_int_triangle_negmax; --reset triangle_data
+--      	func_gen_int_triangle_temp1 <= (OTHERS => '0');
+      	func_gen_int_triangle_temp2 <= (OTHERS => '0');
       ELSIF (func_gen_int_uns_tcnt >= "0111110011") THEN --greater than 499 is negative slope region
       	func_gen_int_uns_tcnt <= func_gen_int_uns_tcnt + UNSIGNED(FUNC_GEN_TRIANGLE_FREQUENCY);
       	func_gen_int_uns_tcnt1 <= func_gen_int_uns_tcnt1 + UNSIGNED(FUNC_GEN_TRIANGLE_FREQUENCY); --tcnt - 500
@@ -255,6 +258,7 @@ BEGIN
       func_gen_int_dcoffset_data <= ('0' & FUNC_GEN_DCOFSET_AMPLITUDE);
       IF (func_gen_int_uns_sawcnt >= FUNC_GEN_MAX_UNS_CNT) THEN
         func_gen_int_uns_sawcnt <= (OTHERS => '0'); --at end of period, reset sawcnt
+      	func_gen_int_sawtooth_temp1 <= (OTHERS => '0');
         func_gen_int_sawtooth_data <= (OTHERS => '0'); --reset sawtooth_data
       ELSE
       	func_gen_int_uns_sawcnt <= func_gen_int_uns_sawcnt + UNSIGNED(FUNC_GEN_SAWTOOTH_FREQUENCY);
