@@ -1,2 +1,3 @@
 work	"func_gen.vhd"
+work	"hw2.vhd"
 work	"ipcore_dir/sine_rom.vhd"
