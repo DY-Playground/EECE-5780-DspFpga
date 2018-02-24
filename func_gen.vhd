@@ -78,7 +78,7 @@ ENTITY func_gen IS
     func_gen_pulse_out    : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);  -- Pulse Wave Output
     func_gen_triangle_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);  -- Triangle Wave Output
     func_gen_sawtooth_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);  -- Sawtooth Wave Output
-    func_gen_dcoffset_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)  -- DC Offset Output
+    func_gen_dcoffset_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)   -- DC Offset Output
   );
 END func_gen;
 
@@ -89,28 +89,27 @@ ARCHITECTURE Rtl OF func_gen IS
 
 -------------------------------------------------------------------------------
 -- SIGNALS
-SIGNAL func_gen_int_uns_scnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_sine_addr : STD_LOGIC_VECTOR(9 DOWNTO 0);
-SIGNAL func_gen_int_sine_atten : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_sine_data : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_sine_amp : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_uns_pcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_uns_dctemp : UNSIGNED(11 DOWNTO 0) := (OTHERS => '1');
-SIGNAL func_gen_int_pulse_data : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_pulse_data1 : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_uns_tcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_uns_tcnt1 : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_triangle_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL func_gen_int_uns_scnt        : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_sine_addr       : STD_LOGIC_VECTOR(9 DOWNTO 0);
+SIGNAL func_gen_int_sine_atten      : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_sine_data       : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_sine_amp        : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_uns_pcnt        : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_uns_dctemp      : UNSIGNED(11 DOWNTO 0) := (OTHERS => '1');
+SIGNAL func_gen_int_pulse_data      : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_pulse_data1     : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_uns_tcnt        : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_uns_tcnt1       : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_triangle_data   : STD_LOGIC_VECTOR(15 DOWNTO 0);
 SIGNAL func_gen_int_triangle_negmax : STD_LOGIC_VECTOR(15 DOWNTO 0);
-SIGNAL func_gen_int_tpos_slope : STD_LOGIC_VECTOR(24 DOWNTO 0);
-SIGNAL func_gen_int_tneg_slope : STD_LOGIC_VECTOR(24 DOWNTO 0);
-SIGNAL func_gen_int_triangle_temp1 : STD_LOGIC_VECTOR(35 DOWNTO 0);
-SIGNAL func_gen_int_triangle_temp2 : STD_LOGIC_VECTOR(35 DOWNTO 0);
-SIGNAL func_gen_int_uns_sawcnt : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
-SIGNAL func_gen_int_sawtooth_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
-SIGNAL func_gen_int_sawpos_slope : STD_LOGIC_VECTOR(24 DOWNTO 0);
-SIGNAL func_gen_int_sawtooth_temp1 : STD_LOGIC_VECTOR(35 DOWNTO 0);
-SIGNAL func_gen_int_dcoffset_data : STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL func_gen_int_tpos_slope      : STD_LOGIC_VECTOR(24 DOWNTO 0);
+SIGNAL func_gen_int_tneg_slope      : STD_LOGIC_VECTOR(24 DOWNTO 0);
+SIGNAL func_gen_int_triangle_temp1  : STD_LOGIC_VECTOR(35 DOWNTO 0);
+SIGNAL func_gen_int_triangle_temp2  : STD_LOGIC_VECTOR(35 DOWNTO 0);
+SIGNAL func_gen_int_uns_sawcnt      : UNSIGNED(9 DOWNTO 0) := (OTHERS => '0');
+SIGNAL func_gen_int_sawtooth_data   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL func_gen_int_sawpos_slope    : STD_LOGIC_VECTOR(24 DOWNTO 0);
+SIGNAL func_gen_int_sawtooth_temp1  : STD_LOGIC_VECTOR(35 DOWNTO 0);
 
 -------------------------------------------------------------------------------
 -- COMPONENTS
@@ -131,23 +130,28 @@ BEGIN
     douta => func_gen_int_sine_data
     );
   --
-  --sine counter
-  --sine counter free runs at clk rate
-  --counter resets to zero after MAX_CNT is reached or crossed
-  --counter resets to a value based on phase setting
-  --scnt output is the address to the sine lookup table
+  -- sine counter --
+  --
+  -- sine counter free runs at clk rate
+  -- sine counter increments by FUNC_GEN_SINE_FREQUENCY
+  -- incrementing by 1 give lowest frequency of 100 KHz
+  -- incrementing by 2 gives ~200 KHz, 3 gives ~300 KHz ...
+  -- counter resets to zero after MAX_CNT is reached or crossed
+  -- counter resets to a value based on phase setting
+  -- scnt output is the address to the sine lookup table
+  --
   sine_counter: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
   BEGIN
     IF (func_gen_rst_l_in='0') THEN 
       CASE FUNC_GEN_SINE_PHASE IS 
-      	WHEN "000" => func_gen_int_uns_scnt <= (OTHERS => '0'); -- 0 deg
-        WHEN "001" => func_gen_int_uns_scnt <= "0001111100";  -- 45 deg is 124
-        WHEN "010" => func_gen_int_uns_scnt <= "0011111001";  -- 90 deg is 249
-        WHEN "011" => func_gen_int_uns_scnt <= "0101110111";  -- 135 deg is 374
-        WHEN "100" => func_gen_int_uns_scnt <= "0111110011";  -- 180 deg is 499
-        WHEN "101" => func_gen_int_uns_scnt <= "1001110000";  -- 225 deg is 624
-        WHEN "110" => func_gen_int_uns_scnt <= "1011101101";  -- 370 deg is 749
-        WHEN "111" => func_gen_int_uns_scnt <= "1101101010";  -- 315 deg is 874
+      	WHEN "000"  => func_gen_int_uns_scnt <= (OTHERS => '0'); -- 0 deg
+        WHEN "001"  => func_gen_int_uns_scnt <= "0001111100";  -- 45 deg is 124
+        WHEN "010"  => func_gen_int_uns_scnt <= "0011111001";  -- 90 deg is 249
+        WHEN "011"  => func_gen_int_uns_scnt <= "0101110111";  -- 135 deg is 374
+        WHEN "100"  => func_gen_int_uns_scnt <= "0111110011";  -- 180 deg is 499
+        WHEN "101"  => func_gen_int_uns_scnt <= "1001110000";  -- 225 deg is 624
+        WHEN "110"  => func_gen_int_uns_scnt <= "1011101101";  -- 370 deg is 749
+        WHEN "111"  => func_gen_int_uns_scnt <= "1101101010";  -- 315 deg is 874
       	WHEN OTHERS => func_gen_int_uns_scnt <= (OTHERS => 'X'); -- 
       END CASE; 
     ELSIF (func_gen_clk_in'EVENT AND func_gen_clk_in='1') THEN
@@ -160,8 +164,10 @@ BEGIN
   END PROCESS sine_counter;
   func_gen_int_sine_addr <=  STD_LOGIC_VECTOR(func_gen_int_uns_scnt); --non-synchronous assigment
   --
-  --sine attenuator
-  --sine_data scaled by sign extended FUNC_GEN_SINE_AMPLITUDE
+  -- sine attenuator --
+  --
+  -- sine_data scaled by sign extended FUNC_GEN_SINE_AMPLITUDE
+  --
   func_gen_int_sine_amp <= ('0' & FUNC_GEN_SINE_AMPLITUDE); -- sign extend pos mag
   sine_atten: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
   BEGIN
@@ -173,10 +179,12 @@ BEGIN
   END PROCESS sine_atten;
   func_gen_sine_out <= func_gen_int_sine_atten(30 DOWNTO 15); --non-synchronous assigment
   --
-  --pulse counter
-  --pulse_data starts at FUNC_GEN_PULSE_AMPLITUDE, then resets to zero after desired duty cycle
-  --PULSE_DUTYCYCLE scaled counts per 1000 by muliplying by 10 so that can be compared to pcnt
-  --pcnt counts in steps of PULSE_FREQUENCY up to 999
+  -- pulse counter --
+  --
+  -- pulse_data starts at FUNC_GEN_PULSE_AMPLITUDE, then resets to zero after desired duty cycle
+  -- PULSE_DUTYCYCLE scaled counts per 1000 by muliplying by 10 so that can be compared to pcnt
+  -- pcnt counts in steps of PULSE_FREQUENCY up to 999
+  --
   pulse_counter: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
   BEGIN
     IF (func_gen_rst_l_in='0') THEN 
@@ -202,12 +210,14 @@ BEGIN
     END IF;  	
   END PROCESS pulse_counter;
   --
-  --triangle counter
-  --Triangle_data starts at -FUNC_GEN_TRIANGLE_AMPLITUDE, then counts up to +FUNC_GEN_TRIANGLE_AMPLITUDE
-  --in half a period, then it counts with an equal but opposite slope for the 2nd half of the period.
-  --The slope is 2*FUNC_GEN_TRIANGLE_AMPLITUDE / 500 tcnts = FUNC_GEN_TRIANGLE_AMPLITUDE / 250.
-  --Dividing by 250 is approximately equal to multiplying by 131 and then dividing by 32768 (rt shift by 15).
-  --tcnt counts in steps of PULSE_FREQUENCY up to 999
+  --triangle counter --
+  --
+  -- Triangle_data starts at -FUNC_GEN_TRIANGLE_AMPLITUDE, then counts up to +FUNC_GEN_TRIANGLE_AMPLITUDE
+  -- in half a period, then it counts with an equal but opposite slope for the 2nd half of the period.
+  -- The slope is 2*FUNC_GEN_TRIANGLE_AMPLITUDE / 500 tcnts = FUNC_GEN_TRIANGLE_AMPLITUDE / 250.
+  -- Dividing by 250 is approximately equal to multiplying by 131 and then dividing by 32768 (rt shift by 15).
+  -- tcnt counts in steps of PULSE_FREQUENCY up to 999
+  --
   triangle_counter: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
   BEGIN
     IF (func_gen_rst_l_in='0') THEN 
@@ -245,12 +255,14 @@ BEGIN
   END PROCESS triangle_counter;
   func_gen_triangle_out <= func_gen_int_triangle_data; --non-synchronous assigment
   --
-  --sawtooth counter
-  --Sawtooth_data starts at zero, then counts up to +FUNC_GEN_SAWTOOTH_AMPLITUDE
-  --in a full period, then it resets to zero in a single sawcnt.
-  --The slope is FUNC_GEN_TRIANGLE_AMPLITUDE / 1000 tcnts.
-  --Dividing by 1000 is approximately equal to multiplying by 131 and then dividing by 131072 (rt shift by 17).
-  --sawcnt counts in steps of SAWTOOTH_FREQUENCY up to 999
+  --sawtooth counter --
+  --
+  -- Sawtooth_data starts at zero, then counts up to +FUNC_GEN_SAWTOOTH_AMPLITUDE
+  -- in a full period, then it resets to zero in a single sawcnt.
+  -- The slope is FUNC_GEN_TRIANGLE_AMPLITUDE / 1000 tcnts.
+  -- Dividing by 1000 is approximately equal to multiplying by 131 and then dividing by 131072 (rt shift by 17).
+  -- sawcnt counts in steps of SAWTOOTH_FREQUENCY up to 999
+  --
   sawtooth_counter: PROCESS(func_gen_clk_in,func_gen_rst_l_in)
   BEGIN
     IF (func_gen_rst_l_in='0') THEN 
@@ -258,10 +270,8 @@ BEGIN
      	func_gen_int_sawtooth_data <= (OTHERS => '0');
      	func_gen_int_sawpos_slope <= (OTHERS => '0');
      	func_gen_int_sawtooth_temp1 <= (OTHERS => '0');
-     	func_gen_int_dcoffset_data <= (OTHERS => '0');
     ELSIF (func_gen_clk_in'EVENT AND func_gen_clk_in='1') THEN
       func_gen_int_sawpos_slope <= ('0' & FUNC_GEN_SAWTOOTH_AMPLITUDE) * "010000011"; --mult by 131
-      func_gen_int_dcoffset_data <= ('0' & FUNC_GEN_DCOFSET_AMPLITUDE);
       IF (func_gen_int_uns_sawcnt >= FUNC_GEN_MAX_UNS_CNT - UNSIGNED(FUNC_GEN_SAWTOOTH_FREQUENCY)) THEN
         func_gen_int_uns_sawcnt <= (OTHERS => '0'); --at end of period, reset sawcnt
       	func_gen_int_sawtooth_temp1 <= (OTHERS => '0');
@@ -275,7 +285,12 @@ BEGIN
     END IF;  	
   END PROCESS sawtooth_counter;
   func_gen_sawtooth_out <= func_gen_int_sawtooth_data; --non-synchronous assigment
-  func_gen_dcoffset_out <= func_gen_int_dcoffset_data; --non-synchronous assignment
+  --
+  -- dc offset --
+  --
+  -- The dc offset is set equal to the amplitude generic passed in. 
+  --
+  func_gen_dcoffset_out <= ('0' & FUNC_GEN_DCOFSET_AMPLITUDE); --non-synchronous assignment
 END Rtl; 
 
 -------------------------------------------------------------------------------

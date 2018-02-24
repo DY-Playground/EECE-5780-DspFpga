@@ -46,6 +46,9 @@
 #Simulation logic analyzer
 #########
 !*.wcfg
+!*.do
+!*.fdo
+!*.udo
 #########
 #MIG
 #########
