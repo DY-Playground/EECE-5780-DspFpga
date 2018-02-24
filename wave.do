@@ -2,12 +2,12 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /func_gen_tb/func_gen_clk_in
 add wave -noupdate /func_gen_tb/func_gen_rst_l_in
-add wave -noupdate -format Analog-Step -height 50 -max 3.0 -min -4.0 -radix decimal /func_gen_tb/func_gen_sine_out
-add wave -noupdate -format Analog-Step -height 50 -max 32767.0 -min -32767.0 -radix decimal /func_gen_tb/uut/func_gen_int_sine_data
+add wave -noupdate -format Analog-Step -height 50 -max 16381.000000000004 -min -16383.0 -radix sfixed /func_gen_tb/func_gen_sine_out
+add wave -noupdate -format Analog-Step -height 50 -max 32767.0 -min -32767.0 -radix sfixed /func_gen_tb/uut/func_gen_int_sine_data
 add wave -noupdate -format Analog-Step -height 50 -max 4095.0 -radix decimal /func_gen_tb/func_gen_pulse_out
-add wave -noupdate -format Analog-Step -height 50 -max 31.0 -min -31.0 -radix decimal /func_gen_tb/func_gen_triangle_out
-add wave -noupdate -format Analog-Step -height 50 -max 62.0 -radix decimal /func_gen_tb/func_gen_sawtooth_out
-add wave -noupdate /func_gen_tb/func_gen_dcoffset_out
+add wave -noupdate -format Analog-Step -height 50 -max 31.0 -min -31.0 -radix sfixed /func_gen_tb/func_gen_triangle_out
+add wave -noupdate -format Analog-Step -height 50 -max 62.0 -radix sfixed /func_gen_tb/func_gen_sawtooth_out
+add wave -noupdate -radix sfixed /func_gen_tb/func_gen_dcoffset_out
 add wave -noupdate /func_gen_tb/uut/func_gen_int_sine_amp
 add wave -noupdate /func_gen_tb/uut/func_gen_int_uns_scnt
 add wave -noupdate /func_gen_tb/uut/func_gen_int_uns_pcnt
@@ -19,10 +19,10 @@ add wave -noupdate /func_gen_tb/uut/func_gen_int_tneg_slope
 add wave -noupdate /func_gen_tb/uut/func_gen_int_triangle_temp1
 add wave -noupdate /func_gen_tb/uut/func_gen_int_triangle_temp2
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {5717822 ps} 0}
-quietly wave cursor active 1
+WaveRestoreCursors
+quietly wave cursor active 0
 configure wave -namecolwidth 195
-configure wave -valuecolwidth 58
+configure wave -valuecolwidth 85
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
 configure wave -snapdistance 10
@@ -35,4 +35,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ps} {21 us}
+WaveRestoreZoom {0 ps} {10322368 ps}

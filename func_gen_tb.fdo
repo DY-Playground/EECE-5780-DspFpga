@@ -44,7 +44,7 @@ do {func_gen_tb.udo}
 #
 # Run simulation for this time
 #
-run 20000ns
+run 10000ns
 #
 # End
 #

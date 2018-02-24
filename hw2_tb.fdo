@@ -46,7 +46,7 @@ do {hw2_tb.udo}
 #
 # Run simulation for this time
 #
-run 100000ns
+run 160000ns
 #
 # End
 #

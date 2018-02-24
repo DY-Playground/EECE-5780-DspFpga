@@ -41,31 +41,31 @@ ENTITY func_gen IS
     	:= "1111100111"; -- 999
     -- Sine Wave Parameters
     FUNC_GEN_SINE_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "000000000000111";  -- x3FFF=0dB attenuation
+    	:= "111111111111111";  -- x3FFF=0dB attenuation
     FUNC_GEN_SINE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
-    	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
+    	:= "0000000111";  -- x001=100 KHz, 100 KHz steps
     FUNC_GEN_SINE_PHASE : STD_LOGIC_VECTOR(2 DOWNTO 0)
-    	:= "100";  -- x0=0, x1=45, x2=90, x3=135, x4=180, x5=x6=x7=0
+    	:= "100"; -- x0=0, 1=45,x2=90,x3=135,x4=180,x5=225,x6=270,=x7=315
     -- Pulse Wave Parameters
     FUNC_GEN_PULSE_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "000111111111111";  -- x3FFF=0dB attenuation
+    	:= "000000000000001";  -- specifies max amplitude of the output
     FUNC_GEN_PULSE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000001";  -- x001=100 KHz, 100 KHz steps
     FUNC_GEN_PULSE_DUTYCYCLE : STD_LOGIC_VECTOR(6 DOWNTO 0)
     	:= "0110010";  -- 0-100
     -- Triangle Wave Parameters
     FUNC_GEN_TRIANGLE_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "000000000011111";  -- x3FFF=0dB attenuation
+    	:= "000000000011111";  -- specifies the max amplitude of the output
     FUNC_GEN_TRIANGLE_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000011";  -- x001=100 KHz, 100 KHz steps
     -- Sawtooth Wave Parameters
     FUNC_GEN_SAWTOOTH_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-    	:= "000000000111111";  -- x3FFF=0dB attenuation
+    	:= "000000000111111";  -- specifies the max amplitude of the output
     FUNC_GEN_SAWTOOTH_FREQUENCY : STD_LOGIC_VECTOR(9 DOWNTO 0)
     	:= "0000000010";  -- x001=100 KHz, 100 KHz steps
     -- DC Offset Parameters
     FUNC_GEN_DCOFSET_AMPLITUDE : STD_LOGIC_VECTOR(14 DOWNTO 0)
-     	:= "001111111111111"  -- x3FFF=0dB attenuation
+     	:= "010000000000000"  -- specifies the amplitude of the output
   );
     
 -------------------------------------------------------------------------------
@@ -141,11 +141,14 @@ BEGIN
     IF (func_gen_rst_l_in='0') THEN 
       CASE FUNC_GEN_SINE_PHASE IS 
       	WHEN "000" => func_gen_int_uns_scnt <= (OTHERS => '0'); -- 0 deg
-        WHEN "001" => func_gen_int_uns_scnt <= "0001111111";  -- 45 deg is 127
+        WHEN "001" => func_gen_int_uns_scnt <= "0001111100";  -- 45 deg is 124
         WHEN "010" => func_gen_int_uns_scnt <= "0011111001";  -- 90 deg is 249
-        WHEN "011" => func_gen_int_uns_scnt <= "0101111111";  -- 135 deg is 333
+        WHEN "011" => func_gen_int_uns_scnt <= "0101110111";  -- 135 deg is 374
         WHEN "100" => func_gen_int_uns_scnt <= "0111110011";  -- 180 deg is 499
-      	WHEN OTHERS => func_gen_int_uns_scnt <= (OTHERS => '0'); -- 0 deg
+        WHEN "101" => func_gen_int_uns_scnt <= "1001110000";  -- 225 deg is 624
+        WHEN "110" => func_gen_int_uns_scnt <= "1011101101";  -- 370 deg is 749
+        WHEN "111" => func_gen_int_uns_scnt <= "1101101010";  -- 315 deg is 874
+      	WHEN OTHERS => func_gen_int_uns_scnt <= (OTHERS => 'X'); -- 
       END CASE; 
     ELSIF (func_gen_clk_in'EVENT AND func_gen_clk_in='1') THEN
       IF (func_gen_int_uns_scnt >= FUNC_GEN_MAX_UNS_CNT - unsigned(FUNC_GEN_SINE_FREQUENCY)) THEN
@@ -168,7 +171,7 @@ BEGIN
       func_gen_int_sine_atten <= func_gen_int_sine_data * func_gen_int_sine_amp;
     END IF;  	    
   END PROCESS sine_atten;
-  func_gen_sine_out <= func_gen_int_sine_atten(31 DOWNTO 16); --non-synchronous assigment
+  func_gen_sine_out <= func_gen_int_sine_atten(30 DOWNTO 15); --non-synchronous assigment
   --
   --pulse counter
   --pulse_data starts at FUNC_GEN_PULSE_AMPLITUDE, then resets to zero after desired duty cycle
